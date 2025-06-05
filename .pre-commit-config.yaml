@@ -1,0 +1,23 @@
+ci:
+    autofix_commit_msg: |
+        [pre-commit.ci] auto fixes from pre-commit.com hooks
+    autofix_prs: true
+    autoupdate_branch: main
+    autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+    autoupdate_schedule: quarterly
+    skip: []
+repos:
+-   repo: local
+    hooks:
+    -   id: rust-fmt
+        name: Rust fmt
+        entry: cargo fmt
+        language: rust
+        types: [rust]
+        pass_filenames: false 
+    -   id: rust-check
+        name: Rust check
+        entry: cargo check
+        language: rust
+        types: [rust]
+        pass_filenames: false 
