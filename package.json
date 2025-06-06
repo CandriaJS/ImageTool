@@ -1,0 +1,45 @@
+{
+  "name": "@candriajs/image-tool",
+  "version": "0.0.0",
+  "description": "一个图片工具",
+  "license": "GNU General Public License v3.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "LICENSE",
+    "package.json",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "artifacts": "napi artifacts",
+    "build": "napi build --platform --release ./dist",
+    "build:debug": "napi build --platform",
+    "prepublishOnly": "napi prepublish -t npm",
+    "test": "ava",
+    "universal": "napi universal",
+    "version": "napi version"
+  },
+  "ava": {
+    "timeout": "3m"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^2.18.4",
+    "ava": "^6.0.1"
+  },
+  "packageManager": "pnpm@9.13.2",
+  "engines": {
+    "node": ">= 20"
+  },
+  "napi": {
+    "name": "image-tool",
+    "triples": {
+      "additional": [
+        "aarch64-apple-darwin",
+        "aarch64-linux-android",
+        "aarch64-unknown-linux-gnu"
+      ]
+    }
+  }
+}

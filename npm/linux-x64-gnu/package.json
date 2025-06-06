@@ -1,0 +1,21 @@
+{
+  "name": "CandriaJS/Image-tool-linux-x64-gnu",
+  "version": "0.0.0",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "main": "CandriaJS/Image-tool.linux-x64-gnu.node",
+  "files": [
+    "CandriaJS/Image-tool.linux-x64-gnu.node"
+  ],
+  "license": "GNU General Public License v3.0",
+  "engines": {
+    "node": ">= 00"
+  },
+  "libc": [
+    "glibc"
+  ]
+}
