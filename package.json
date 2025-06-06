@@ -1,6 +1,6 @@
 {
   "name": "@candriajs/image-tool",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "一个图片工具",
   "keywords": [
     "image-tool"
@@ -9,10 +9,7 @@
   "bugs": {
     "url": "https://github.com/CandriaJS/image-tool/issues"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/CandriaJS/image-tool.git"
-  },
+  "repository": "https://github.com/CandriaJS/image-tool",
   "license": "GNU General Public License v3.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -31,7 +28,8 @@
     "prepublishOnly": "napi prepublish -t npm",
     "test": "ava",
     "universal": "napi universal",
-    "version": "napi version"
+    "version": "napi version",
+    "publish": "napi prepublish -t npm"
   },
   "ava": {
     "timeout": "3m"

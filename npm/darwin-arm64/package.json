@@ -1,6 +1,6 @@
 {
   "name": "@candriajs/image-tool-darwin-arm64",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "os": [
     "darwin"
   ],
@@ -12,8 +12,16 @@
     "image-tool.darwin-arm64.node"
   ],
   "description": "一个图片工具",
+  "keywords": [
+    "image-tool"
+  ],
+  "homepage": "https://github.com/CandriaJS/image-tool",
   "license": "GNU General Public License v3.0",
   "engines": {
     "node": ">= 20"
+  },
+  "repository": "https://github.com/CandriaJS/image-tool",
+  "bugs": {
+    "url": "https://github.com/CandriaJS/image-tool/issues"
   }
 }

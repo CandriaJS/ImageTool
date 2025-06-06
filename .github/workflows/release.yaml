@@ -135,12 +135,11 @@ jobs:
 
       - name: 发布到 GitHub Packages
         id: publish-to-github
-        uses: JS-DevTools/npm-publish@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          registry: https://npm.pkg.github.com
-          access: public
-          provenance: true
+        run: |
+          npm config set provenance true
+          npm config set registry https://npm.pkg.github.com
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> ~/.npmrc
+          npm publish --access public
 
   publish-to-npm:
     runs-on: ubuntu-latest
@@ -168,10 +167,9 @@ jobs:
 
       - name: 发布到 NPM
         id: publish-to-npm
-        uses: JS-DevTools/npm-publish@v3
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          registry: https://registry.npmjs.org/
-          access: public
-          provenance: true
+        run: |
+          npm config set provenance true
+          npm config set registry https://registry.npmjs.org/
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
+          npm publish --access public
 
