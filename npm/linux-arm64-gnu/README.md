@@ -1,3 +1,3 @@
-# `CandriaJS/Image-tool-linux-arm64-gnu`
+# `@candriajs/image-tool-linux-arm64-gnu`
 
-This is the **aarch64-unknown-linux-gnu** binary for `CandriaJS/Image-tool`
+This is the **aarch64-unknown-linux-gnu** binary for `@candriajs/image-tool`

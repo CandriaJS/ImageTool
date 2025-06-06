@@ -1,3 +1,3 @@
-# `CandriaJS/Image-tool-win32-x64-msvc`
+# `@candriajs/image-tool-win32-x64-msvc`
 
-This is the **x86_64-pc-windows-msvc** binary for `CandriaJS/Image-tool`
+This is the **x86_64-pc-windows-msvc** binary for `@candriajs/image-tool`

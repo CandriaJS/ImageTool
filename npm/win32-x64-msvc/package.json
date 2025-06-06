@@ -1,5 +1,5 @@
 {
-  "name": "CandriaJS/Image-tool-win32-x64-msvc",
+  "name": "@candriajs/image-tool-win32-x64-msvc",
   "version": "0.0.0",
   "os": [
     "win32"
@@ -7,12 +7,13 @@
   "cpu": [
     "x64"
   ],
-  "main": "CandriaJS/Image-tool.win32-x64-msvc.node",
+  "main": "image-tool.win32-x64-msvc.node",
   "files": [
-    "CandriaJS/Image-tool.win32-x64-msvc.node"
+    "image-tool.win32-x64-msvc.node"
   ],
+  "description": "一个图片工具",
   "license": "GNU General Public License v3.0",
   "engines": {
-    "node": ">= 00"
+    "node": ">= 20"
   }
 }

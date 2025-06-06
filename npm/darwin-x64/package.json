@@ -1,5 +1,5 @@
 {
-  "name": "CandriaJS/Image-tool-darwin-x64",
+  "name": "@candriajs/image-tool-darwin-x64",
   "version": "0.0.0",
   "os": [
     "darwin"
@@ -7,12 +7,13 @@
   "cpu": [
     "x64"
   ],
-  "main": "CandriaJS/Image-tool.darwin-x64.node",
+  "main": "image-tool.darwin-x64.node",
   "files": [
-    "CandriaJS/Image-tool.darwin-x64.node"
+    "image-tool.darwin-x64.node"
   ],
+  "description": "一个图片工具",
   "license": "GNU General Public License v3.0",
   "engines": {
-    "node": ">= 00"
+    "node": ">= 20"
   }
 }

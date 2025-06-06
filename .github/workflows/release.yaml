@@ -22,35 +22,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # release:
-  #   runs-on: ubuntu-latest
-  #   outputs:
-  #     releases_created: ${{ steps.release-please.outputs.releases_created }}
-  #   steps:
-  #     - name: 获取token
-  #       uses: actions/create-github-app-token@v2
-  #       id: app-token
-  #       with:
-  #         app-id: ${{ secrets.APP_ID }}
-  #         private-key: ${{ secrets.APP_PRIVATE_KEY }}
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      releases_created: ${{ steps.release-please.outputs.releases_created }}
+    steps:
+      - name: 获取token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
-  #     - name: 获取用户ID
-  #       id: get-user-id
-  #       run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
-  #       env:
-  #         GH_TOKEN: ${{ steps.app-token.outputs.token }}
+      - name: 获取用户ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           
-  #     - name: 运行 release-please-action
-  #       id: release-please
-  #       uses: googleapis/release-please-action@v4
-  #       with:
-  #         token: ${{ steps.app-token.outputs.token }}
-  #         config-file: .release-please-config.json
-  #         manifest-file: .release-please-manifest.json
+      - name: 运行 release-please-action
+        id: release-please
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json
 
   build:
-    # needs: [release]
-    # if: needs.release.outputs.releases_created == 'true'
+    needs: [release]
+    if: needs.release.outputs.releases_created == 'true'
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
@@ -80,20 +80,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
-
-      - name: 获取token
-        uses: actions/create-github-app-token@v2
-        id: app-token
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-
-      - name: 获取用户ID
-        id: get-user-id
-        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
 
       - name: 设置 pnpm
         uses: pnpm/action-setup@v4
@@ -127,81 +113,39 @@ jobs:
           name: ${{ env.APP_NAME }}-${{ matrix.platform.label }}
           path: ${{ runner.temp }}/temp/
 
-  test:
-    needs: [build]
-    runs-on: ${{ matrix.platform.runner }}
-    strategy:
-      matrix:
-        platform:
-          - runner: windows-latest
-            target: x86_64-pc-windows-msvc
-            label: windows-x86_64
-          - runner: macos-latest
-            target: x86_64-apple-darwin
-            label: macos-x86_64
-          - runner: macos-latest
-            target: aarch64-apple-darwin
-            label: macos-aarch64
-          - runner: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            label: linux-x86_64
-          - runner: ubuntu-24.04-arm
-            target: aarch64-unknown-linux-gnu
-            label: linux-aarch64
+  publish-to-github:
+    runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: 导入构建产物
         uses: actions/download-artifact@v4
         with:
-          name: ${{ env.APP_NAME }}-${{ matrix.platform.label }}
-          path: ./
+          path: artifacts
 
-      - name: 设置 pnpm
-        uses: pnpm/action-setup@v4
+      - name: 发布到 GitHub Packages
+        id: publish-to-github
+        uses: JS-DevTools/npm-publish@v3
         with:
-          version: 9.13.2
-          run_install: |
-            - args: [--no-frozen-lockfile]
+          token: ${{ secrets.GITHUB_TOKEN }}
+          registry: https://npm.pkg.github.com
+          access: public
+          provenance: true
 
-      -  name: 测试
-         run: pnpm test
+  publish-to-npm:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: 导入构建产物
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
 
-  # publish-to-github:
-  #   runs-on: ubuntu-latest
-  #   needs: [release, create-release]
-  #   if: needs.release.outputs.releases_created == 'true'
-  #   steps:
-  #     - name: 导入构建产物
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: ${{ needs.create-release.outputs.package_short_name }}
-  #         path: ./
-
-  #     - name: 发布到 GitHub Packages
-  #       id: publish-to-github
-  #       uses: JS-DevTools/npm-publish@v3
-  #       with:
-  #         token: ${{ secrets.GITHUB_TOKEN }}
-  #         registry: https://npm.pkg.github.com
-  #         access: public
-  #         provenance: true
-
-  # publish-to-npm:
-  #   runs-on: ubuntu-latest
-  #   needs: [release, create-release]
-  #   if: needs.release.outputs.releases_created == 'true'
-  #   steps:
-  #     - name: 导入构建产物
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: ${{ needs.create-release.outputs.package_short_name }}
-  #         path: ./
-
-  #     - name: 发布到 NPM
-  #       id: publish-to-npm
-  #       uses: JS-DevTools/npm-publish@v3
-  #       with:
-  #         token: ${{ secrets.NPM_TOKEN }}
-  #         registry: https://registry.npmjs.org/
-  #         access: public
-  #         provenance: true
+      - name: 发布到 NPM
+        id: publish-to-npm
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          registry: https://registry.npmjs.org/
+          access: public
+          provenance: true
 

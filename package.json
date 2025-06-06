@@ -1,6 +1,6 @@
 {
   "name": "@candriajs/image-tool",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "一个图片工具",
   "license": "GNU General Public License v3.0",
   "main": "dist/index.js",
@@ -37,7 +37,6 @@
     "triples": {
       "additional": [
         "aarch64-apple-darwin",
-        "aarch64-linux-android",
         "aarch64-unknown-linux-gnu"
       ]
     }

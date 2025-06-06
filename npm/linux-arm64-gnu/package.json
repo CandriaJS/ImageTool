@@ -1,5 +1,5 @@
 {
-  "name": "CandriaJS/Image-tool-linux-arm64-gnu",
+  "name": "@candriajs/image-tool-linux-arm64-gnu",
   "version": "0.0.0",
   "os": [
     "linux"
@@ -7,13 +7,14 @@
   "cpu": [
     "arm64"
   ],
-  "main": "CandriaJS/Image-tool.linux-arm64-gnu.node",
+  "main": "image-tool.linux-arm64-gnu.node",
   "files": [
-    "CandriaJS/Image-tool.linux-arm64-gnu.node"
+    "image-tool.linux-arm64-gnu.node"
   ],
+  "description": "一个图片工具",
   "license": "GNU General Public License v3.0",
   "engines": {
-    "node": ">= 00"
+    "node": ">= 20"
   },
   "libc": [
     "glibc"
