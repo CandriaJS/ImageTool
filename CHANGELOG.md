@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/CandriaJS/image-tool/compare/v0.1.3...v0.1.4) (2025-06-06)
+
+
+### 📦️ 构建系统
+
+* 优化构建流程并添加平台特定构建产物 ([4f94a90](https://github.com/CandriaJS/image-tool/commit/4f94a90f80651f1a23dbdbc43c1ac27f67ee3913))
+
 ## [0.1.3](https://github.com/CandriaJS/image-tool/compare/v0.1.2...v0.1.3) (2025-06-06)
 
 
