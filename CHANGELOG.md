@@ -1,5 +1,12 @@
 # 变更日志
 
+## [0.1.8](https://github.com/CandriaJS/image-tool/compare/v0.1.7...v0.1.8) (2025-06-06)
+
+
+### 📦️ 构建系统
+
+* 更新版本号并移除 Windows 二进制文件 ([5cba3d0](https://github.com/CandriaJS/image-tool/commit/5cba3d09a8829baa352d73752638f80af415f455))
+
 ## [0.1.7](https://github.com/CandriaJS/image-tool/compare/v0.1.6...v0.1.7) (2025-06-06)
 
 
