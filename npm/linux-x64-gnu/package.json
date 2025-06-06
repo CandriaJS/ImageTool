@@ -1,6 +1,6 @@
 {
   "name": "@candriajs/image-tool-linux-x64-gnu",
-  "version": "0.0.3",
+  "version": "0.1.9",
   "os": [
     "linux"
   ],

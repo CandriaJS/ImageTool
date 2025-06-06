@@ -1,6 +1,6 @@
 {
   "name": "@candriajs/image-tool-win32-x64-msvc",
-  "version": "0.0.3",
+  "version": "0.1.9",
   "os": [
     "win32"
   ],
