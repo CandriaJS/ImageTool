@@ -98,12 +98,16 @@ jobs:
 
       - name: 添加目标平台
         run: rustup target add ${{ matrix.platform.target }}
+
+      - name: 构建
+        run: ${{ matrix.platform.build }}
       
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}-${{ matrix.platform.label }}
           path: dist/${{ env.APP_NAME }}.*.node
+          if-no-files-found: error
 
   publish-to-github:
     runs-on: ubuntu-latest

@@ -1,4 +1,4 @@
-# Changelog
+# 变更日志
 
 ## [0.1.4](https://github.com/CandriaJS/image-tool/compare/v0.1.3...v0.1.4) (2025-06-06)
 
