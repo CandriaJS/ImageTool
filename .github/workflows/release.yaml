@@ -117,10 +117,25 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - name: 检出主分支代码
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
       - name: 导入构建产物
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+
+      - name: 设置 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.13.2
+          run_install: |
+            - args: [--no-frozen-lockfile]
+
+      - name: 移动构建产物
+        run: pnpm artifacts
 
       - name: 发布到 GitHub Packages
         id: publish-to-github
@@ -135,10 +150,25 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - name: 检出主分支代码
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          
       - name: 导入构建产物
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+
+      - name: 设置 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.13.2
+          run_install: |
+            - args: [--no-frozen-lockfile]
+
+      - name: 移动构建产物
+        run: pnpm artifacts
 
       - name: 发布到 NPM
         id: publish-to-npm
