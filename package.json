@@ -1,6 +1,6 @@
 {
   "name": "@candriajs/image-tool",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "一个图片工具",
   "keywords": [
     "image-tool"
@@ -14,8 +14,8 @@
     "url": "git+https://github.com/CandriaJS/image-tool.git"
   },
   "license": "GNU General Public License v3.0",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
     "dist/index.d.ts",
     "dist/index.js",
