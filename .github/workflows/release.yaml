@@ -94,7 +94,7 @@ jobs:
       - name: 启用 Rust 缓存
         uses: swatinem/rust-cache@v2
         with:
-          prefix-key: meme-generator-rs
+          prefix-key: ${{ env.APP_NAME}}
 
       - name: 添加目标平台
         run: rustup target add ${{ matrix.platform.target }}
