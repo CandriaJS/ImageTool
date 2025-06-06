@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/CandriaJS/image-tool/compare/v0.1.2...v0.1.3) (2025-06-06)
+
+
+### 🎡 持续集成
+
+* **release:** 使用 pnpm 处理构建产物 ([0fc4b19](https://github.com/CandriaJS/image-tool/commit/0fc4b19b337057322504ef7e058a61883a00dc0a))
+
 ## [0.1.2](https://github.com/CandriaJS/image-tool/compare/v0.1.1...v0.1.2) (2025-06-06)
 
 
