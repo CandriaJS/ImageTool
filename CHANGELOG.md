@@ -1,5 +1,12 @@
 # 变更日志
 
+## [0.1.5](https://github.com/CandriaJS/image-tool/compare/v0.1.4...v0.1.5) (2025-06-06)
+
+
+### 🎡 持续集成
+
+* **release:** 优化构建流程并确保上传文件存在性 ([5d8c57f](https://github.com/CandriaJS/image-tool/commit/5d8c57f8bc6140db31cdc1f72d64659202150059))
+
 ## [0.1.4](https://github.com/CandriaJS/image-tool/compare/v0.1.3...v0.1.4) (2025-06-06)
 
 
