@@ -1,5 +1,12 @@
 # 变更日志
 
+## [0.1.7](https://github.com/CandriaJS/image-tool/compare/v0.1.6...v0.1.7) (2025-06-06)
+
+
+### 🎡 持续集成
+
+* **release:** 替换 GitHub Actions 发布到 npm 注册表的方法 ([b52e9d0](https://github.com/CandriaJS/image-tool/commit/b52e9d0f708a9ee5c8dcdca8aa66a246996dbdb6))
+
 ## [0.1.6](https://github.com/CandriaJS/image-tool/compare/v0.1.5...v0.1.6) (2025-06-06)
 
 
