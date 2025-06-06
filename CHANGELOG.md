@@ -1,5 +1,12 @@
 # 变更日志
 
+## [0.1.6](https://github.com/CandriaJS/image-tool/compare/v0.1.5...v0.1.6) (2025-06-06)
+
+
+### 📦️ 构建系统
+
+* 更新版本号并移除可选依赖 ([bb28d61](https://github.com/CandriaJS/image-tool/commit/bb28d617e82cbed9cdab9f69c1219821d5696cf2))
+
 ## [0.1.5](https://github.com/CandriaJS/image-tool/compare/v0.1.4...v0.1.5) (2025-06-06)
 
 
