@@ -32,7 +32,7 @@
     "test": "ava",
     "universal": "napi universal",
     "version": "napi version",
-    "publish": "napi prepublish -t npm"
+    "publish": "napi prepublish --skip-gh-release -t npm"
   },
   "ava": {
     "timeout": "3m"
