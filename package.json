@@ -1,6 +1,6 @@
 {
   "name": "@candriajs/image-tool",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "一个图片工具",
   "keywords": [
     "napi",

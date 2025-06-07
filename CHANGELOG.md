@@ -1,5 +1,12 @@
 # 变更日志
 
+## [0.3.2](https://github.com/CandriaJS/image-tool/compare/v0.3.1...v0.3.2) (2025-06-07)
+
+
+### 🔧 其他更新
+
+* 在发布工作流中添加导入npm包文件的步骤 ([f57d750](https://github.com/CandriaJS/image-tool/commit/f57d750c0e2051aaba2ce93ce8b2169c5b5b37b9))
+
 ## [0.3.1](https://github.com/CandriaJS/image-tool/compare/v0.3.0...v0.3.1) (2025-06-07)
 
 
