@@ -4,6 +4,7 @@
 extern crate napi_derive;
 
 mod image;
+pub use image::image_color_mask;
 pub use image::image_crop;
 pub use image::image_flip_horizontal;
 pub use image::image_flip_vertical;

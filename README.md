@@ -84,6 +84,9 @@ imageTool.image_grayscale(buffer: Buffer): Buffer
 
 // 反色
 imageTool.image_invert(buffer: Buffer): Buffer
+
+// 颜色滤镜
+imageTool.image_color_mask(buffer: Buffer, hax_code: string): Buffer
 ```
 
 ### 🧩 图像拼接
