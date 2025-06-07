@@ -1,5 +1,12 @@
 # 变更日志
 
+## [0.1.11](https://github.com/CandriaJS/image-tool/compare/v0.1.10...v0.1.11) (2025-06-07)
+
+
+### 🎡 持续集成
+
+* **release:** 为 Android 平台添加 aarch64 架构的构建产物 ([1862cdf](https://github.com/CandriaJS/image-tool/commit/1862cdf616ff0662aca091a69f0bab3acf11d7ee))
+
 ## [0.1.10](https://github.com/CandriaJS/image-tool/compare/v0.1.9...v0.1.10) (2025-06-06)
 
 
