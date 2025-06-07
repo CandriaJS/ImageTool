@@ -7,3 +7,4 @@ mod image;
 pub use image::image_crop;
 pub use image::image_info;
 pub use image::image_resize;
+pub use image::image_rotate;
