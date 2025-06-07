@@ -337,3 +337,36 @@ pub fn image_flip_vertical(image_data: Buffer) -> napi::Result<Buffer> {
 
   Ok(Buffer::from(output_buffer))
 }
+
+/// 灰度化图片
+///
+/// # 参数
+/// - `image_data`: 输入的图像 Buffer
+///
+/// # 返回值
+/// - 图像 Buffer
+///
+#[napi(js_name = "image_grayscale")]
+pub fn image_grayscale(image_data: Buffer) -> napi::Result<Buffer> {
+  let cursor = Cursor::new(image_data.as_ref());
+  let decoder = ImageReader::new(cursor)
+    .with_guessed_format()
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  let image = decoder
+    .decode()
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  // 转换为灰度图
+  let grayscale_image = image.grayscale();
+
+  // 将图像编码为 JPEG
+  let mut output_buffer = Vec::new();
+  let mut encoder = JpegEncoder::new_with_quality(&mut output_buffer, 100);
+
+  encoder
+    .encode_image(&grayscale_image)
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  Ok(Buffer::from(output_buffer))
+}
