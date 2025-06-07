@@ -177,6 +177,12 @@ jobs:
         with:
           path: artifacts
 
+      - name: 导入npm包文件
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-package
+          path: ./
+
       - name: 设置 pnpm
         uses: pnpm/action-setup@v4
         with:
