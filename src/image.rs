@@ -204,7 +204,7 @@ pub fn image_resize(buffer: Buffer, width: u32, height: u32) -> napi::Result<Buf
 /// - `degrees`: 旋转的角度, 可选参数, 默认为 90.0
 ///
 /// # 返回值
-/// - 成功时返回缩放后的图像 Buffer
+/// - 图像 Buffer
 ///
 #[napi(js_name = "image_rotate")]
 pub fn image_rotate(image_data: Buffer, degrees: Option<f64>) -> napi::Result<Buffer> {
@@ -267,6 +267,72 @@ pub fn image_rotate(image_data: Buffer, degrees: Option<f64>) -> napi::Result<Bu
 
   encoder
     .encode_image(&rotated)
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  Ok(Buffer::from(output_buffer))
+}
+
+/// 水平翻转图片
+///
+/// # 参数
+/// - `image_data`: 输入的图像 Buffer
+///
+/// # 返回值
+/// - 图像 Buffer
+///
+#[napi(js_name = "image_flip_horizontal")]
+pub fn image_flip_horizontal(image_data: Buffer) -> napi::Result<Buffer> {
+  let cursor = Cursor::new(image_data.as_ref());
+  let decoder = ImageReader::new(cursor)
+    .with_guessed_format()
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  let image = decoder
+    .decode()
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  // 水平翻转图像
+  let flipped_image = image.fliph();
+
+  // 将图像编码为 JPEG
+  let mut output_buffer = Vec::new();
+  let mut encoder = JpegEncoder::new_with_quality(&mut output_buffer, 100);
+
+  encoder
+    .encode_image(&flipped_image)
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  Ok(Buffer::from(output_buffer))
+}
+
+/// 垂直翻转图片
+///
+/// # 参数
+/// - `image_data`: 输入的图像 Buffer
+///
+/// # 返回值
+/// - 图像 Buffer
+///
+#[napi(js_name = "image_flip_vertical")]
+pub fn image_flip_vertical(image_data: Buffer) -> napi::Result<Buffer> {
+  let cursor = Cursor::new(image_data.as_ref());
+  let decoder = ImageReader::new(cursor)
+    .with_guessed_format()
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  let image = decoder
+    .decode()
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  // 水平翻转图像
+  let flipped_image = image.flipv();
+
+  // 将图像编码为 JPEG
+  let mut output_buffer = Vec::new();
+  let mut encoder = JpegEncoder::new_with_quality(&mut output_buffer, 100);
+
+  encoder
+    .encode_image(&flipped_image)
     .map_err(|error| Error::from_reason(error.to_string()))?;
 
   Ok(Buffer::from(output_buffer))
