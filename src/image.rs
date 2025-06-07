@@ -1,9 +1,8 @@
+use gif::Decoder;
 use image::{
-  AnimationDecoder,
   DynamicImage::{self, ImageRgba8},
-  GenericImage, GenericImageView, ImageDecoder, ImageEncoder, ImageFormat, ImageReader, Rgba,
-  RgbaImage,
-  codecs::{gif::GifDecoder, png::PngEncoder},
+  GenericImage, GenericImageView, ImageEncoder, ImageFormat, ImageReader, Rgba, RgbaImage,
+  codecs::png::PngEncoder,
   imageops::FilterType,
 };
 use napi::{Error, bindgen_prelude::Buffer};
@@ -57,14 +56,17 @@ pub fn image_info(image_data: Buffer) -> napi::Result<ImageInfo> {
     // 当图片格式为GIF时
     Some(ImageFormat::Gif) => {
       let cursor = Cursor::new(image_data.as_ref());
-      let decoder =
-        GifDecoder::new(cursor).map_err(|error| Error::from_reason(error.to_string()))?;
+      let mut decoder =
+        Decoder::new(cursor).map_err(|error| Error::from_reason(error.to_string()))?;
 
-      let (width, height) = decoder.dimensions();
-      let frames = decoder
-        .into_frames()
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|error| Error::from_reason(error.to_string()))?;
+      let (width, height) = (decoder.width() as u32, decoder.height() as u32);
+      let mut frames = Vec::new();
+      while let Some(frame) = decoder
+        .read_next_frame()
+        .map_err(|error| Error::from_reason(error.to_string()))?
+      {
+        frames.push(frame.to_owned());
+      }
 
       let frame_count = frames.len() as u32;
 
@@ -72,8 +74,8 @@ pub fn image_info(image_data: Buffer) -> napi::Result<ImageInfo> {
       let total_delay: f64 = frames
         .iter()
         .map(|frame| {
-          let delay = frame.delay().numer_denom_ms();
-          (delay.0 as f64 / delay.1 as f64) / 1000.0
+          let delay = frame.delay as f64;
+          delay / 100.0
         })
         .sum();
 

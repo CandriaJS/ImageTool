@@ -349,6 +349,7 @@ dependencies = [
 name = "image-tool"
 version = "0.1.8"
 dependencies = [
+ "gif",
  "image",
  "napi",
  "napi-build",
