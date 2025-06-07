@@ -1,5 +1,25 @@
 # 变更日志
 
+## [0.2.0](https://github.com/CandriaJS/image-tool/compare/v0.1.11...v0.2.0) (2025-06-07)
+
+
+### ✨ 新功能
+
+* **image:** 旋转图片功能 ([be4071b](https://github.com/CandriaJS/image-tool/commit/be4071bebedefc2e5917b7c4065cef7635188943))
+* **image:** 添加图像信息获取和裁剪功能 ([32bff8f](https://github.com/CandriaJS/image-tool/commit/32bff8f41ef0c7ed1d1022ec5ed04e5850f25ead))
+* **image:** 添加图像灰度化功能 ([6ff5cb3](https://github.com/CandriaJS/image-tool/commit/6ff5cb3e73d39bc0e2c5d96c7923ed85d28f7e06))
+* **image:** 添加图像缩放功能并优化错误处理 ([2d050dc](https://github.com/CandriaJS/image-tool/commit/2d050dce6b5d6a9295fe4b934cf003767387f2ef))
+* **image:** 添加图像翻转功能 ([c4ff102](https://github.com/CandriaJS/image-tool/commit/c4ff1025b118af0bbc0d65f8fc757d4da3687132))
+* **image:** 添加图像颜色滤镜功能 ([363076e](https://github.com/CandriaJS/image-tool/commit/363076ea2a5e61537f60ed1016dd9f5245412787))
+* **image:** 添加图片反色处理功能 ([12b5cbd](https://github.com/CandriaJS/image-tool/commit/12b5cbd7b0be7b30b9baa54a405d795cc7c996c8))
+* **image:** 添加图片拼接功能 ([218dc5b](https://github.com/CandriaJS/image-tool/commit/218dc5bce74c605a27f4215f3970789c11bd52c1))
+
+
+### ♻️ 代码重构
+
+* **image:** 重构图像处理功能并支持 PNG 编码 ([63073d2](https://github.com/CandriaJS/image-tool/commit/63073d2cf30d287d7f2470dd7a2a751fc3fa2e98))
+* **image:** 重构图像裁剪功能并优化 JPEG 编码 ([6fba15d](https://github.com/CandriaJS/image-tool/commit/6fba15d76f4aa540379b43f470e8bcf8a8b2f0c8))
+
 ## [0.1.11](https://github.com/CandriaJS/image-tool/compare/v0.1.10...v0.1.11) (2025-06-07)
 
 
