@@ -1,0 +1,27 @@
+{
+  "name": "@candriajs/image-tool-android-arm64",
+  "version": "0.1.9",
+  "os": [
+    "android"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "image-tool.android-arm64.node",
+  "files": [
+    "image-tool.android-arm64.node"
+  ],
+  "description": "一个图片工具",
+  "keywords": [
+    "image-tool"
+  ],
+  "homepage": "https://github.com/CandriaJS/image-tool",
+  "license": "GNU General Public License v3.0",
+  "engines": {
+    "node": ">= 20"
+  },
+  "repository": "https://github.com/CandriaJS/image-tool",
+  "bugs": {
+    "url": "https://github.com/CandriaJS/image-tool/issues"
+  }
+}

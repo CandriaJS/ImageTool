@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "@napi-rs/cli": "^2.18.4",
+    "@types/node": "^22.15.30",
     "ava": "^6.0.1"
   },
   "packageManager": "pnpm@9.13.2",
@@ -50,15 +51,9 @@
     "triples": {
       "additional": [
         "aarch64-apple-darwin",
-        "aarch64-unknown-linux-gnu"
+        "aarch64-unknown-linux-gnu",
+        "aarch64-linux-android"
       ]
     }
-  },
-  "optionalDependencies": {
-    "@candriajs/image-tool-win32-x64-msvc": "0.1.9",
-    "@candriajs/image-tool-darwin-x64": "0.1.9",
-    "@candriajs/image-tool-linux-x64-gnu": "0.1.9",
-    "@candriajs/image-tool-darwin-arm64": "0.1.9",
-    "@candriajs/image-tool-linux-arm64-gnu": "0.1.9"
   }
 }
