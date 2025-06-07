@@ -15,3 +15,6 @@ pub use image::image_merge_horizontal;
 pub use image::image_merge_vertical;
 pub use image::image_resize;
 pub use image::image_rotate;
+
+mod gif;
+pub use gif::gif_split;
