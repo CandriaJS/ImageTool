@@ -560,3 +560,60 @@ pub fn image_merge_vertical(images: Vec<Buffer>) -> napi::Result<Buffer> {
 
   Ok(Buffer::from(output_buffer))
 }
+
+/// 图像颜色滤镜
+///
+/// # 参数
+/// - `image_data`: 输入的图像 Buffer
+/// - `hex_color`: 16进制颜色字符串, 如 "#FF5733"
+///
+/// # 返回值
+/// - 图像Buffer
+///
+#[napi(js_name = "image_color_mask")]
+pub fn image_color_mask(image_data: Buffer, hex_color: String) -> napi::Result<Buffer> {
+  // 解析16进制颜色
+  if hex_color.len() != 7 || !hex_color.starts_with('#') {
+    return Err(Error::from_reason("无效的16进制颜色代码".to_string()));
+  }
+
+  let r = u8::from_str_radix(&hex_color[1..3], 16)
+    .map_err(|_| Error::from_reason("解析红色通道失败".to_string()))?;
+  let g = u8::from_str_radix(&hex_color[3..5], 16)
+    .map_err(|_| Error::from_reason("解析绿色通道失败".to_string()))?;
+  let b = u8::from_str_radix(&hex_color[5..7], 16)
+    .map_err(|_| Error::from_reason("解析蓝色通道失败".to_string()))?;
+
+  let cursor = Cursor::new(image_data.as_ref());
+  let decoder = ImageReader::new(cursor)
+    .with_guessed_format()
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  let mut image = decoder
+    .decode()
+    .map_err(|error| Error::from_reason(error.to_string()))?
+    .into_rgba8();
+
+  // 对每个像素应用颜色滤镜
+  for pixel in image.pixels_mut() {
+    let [ref mut red, ref mut green, ref mut blue, alpha] = pixel.0;
+    let src_alpha = alpha as f32 / 255.0;
+
+    *red = ((r as f32) * src_alpha * 0.5 + (*red as f32) * (1.0 - src_alpha * 0.5)).round() as u8;
+    *green =
+      ((g as f32) * src_alpha * 0.5 + (*green as f32) * (1.0 - src_alpha * 0.5)).round() as u8;
+    *blue = ((b as f32) * src_alpha * 0.5 + (*blue as f32) * (1.0 - src_alpha * 0.5)).round() as u8;
+  }
+
+  let rgba_image = DynamicImage::ImageRgba8(image);
+  let mut output_buffer = Vec::new();
+  let encoder = PngEncoder::new(&mut output_buffer);
+  let (width, height) = rgba_image.dimensions();
+  let raw_pixels = rgba_image.into_rgba8().into_raw();
+
+  encoder
+    .write_image(&raw_pixels, width, height, image::ColorType::Rgba8.into())
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  Ok(Buffer::from(output_buffer))
+}
