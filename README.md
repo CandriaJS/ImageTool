@@ -97,6 +97,33 @@ imageTool.image_merge_horizontal(images: Buffer[]): Buffer
 // 垂直拼接
 imageTool.image_merge_vertical(images: Buffer[]): Buffer
 ```
+
+### 🎬 GIF 操作
+```ts
+// GIF 分解
+imageTool.gif_split(buffer: Buffer): Buffer[]
+- `buffer`: 输入的 GIF 图像数据
+- 返回值：包含所有帧的 Buffer 数组
+
+// GIF 合成
+imageTool.gif_merge(images: Buffer[], duration?: number): Buffer
+- `images`: 要合成的图像 Buffer 数组
+- `duration`: 每帧的间隔时间（秒），可选参数
+- 返回值：合成的 GIF 图像 Buffer
+
+// GIF 倒放
+imageTool.gif_reverse(buffer: Buffer): Buffer
+- `buffer`: 输入的 GIF 图像数据
+- 返回值：倒放后的 GIF 图像 Buffer
+- 注意：如果输入不是动图或帧数小于等于 1，将返回错误
+
+// GIF 变速
+imageTool.gif_change_duration(buffer: Buffer, duration: number): Buffer
+- `buffer`: 输入的 GIF 图像数据
+- `duration`: 每帧的间隔时间（秒），如果为 0 则保持原速
+- 返回值：变速后的 GIF 图像 Buffer
+- 注意：如果输入不是动图或帧数小于等于 1，将返回错误
+```
 </details>
 
 ## 贡献者 👨‍💻👩‍💻
