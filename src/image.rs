@@ -1,8 +1,8 @@
 use image::{
   AnimationDecoder, DynamicImage, GenericImageView, ImageDecoder, ImageFormat, ImageReader,
-  codecs::gif::GifDecoder, codecs::jpeg::JpegEncoder,
+  codecs::gif::GifDecoder, codecs::jpeg::JpegEncoder, imageops::FilterType,
 };
-use napi::bindgen_prelude::Buffer;
+use napi::{Error, bindgen_prelude::Buffer};
 use std::io::Cursor;
 
 #[napi(object)]
@@ -47,19 +47,20 @@ pub fn image_info(image_data: Buffer) -> napi::Result<ImageInfo> {
   let cursor = Cursor::new(image_data.as_ref());
   let reader = ImageReader::new(cursor)
     .with_guessed_format()
-    .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    .map_err(|error| Error::from_reason(error.to_string()))?;
 
   match reader.format() {
     // 当图片格式为GIF时
     Some(ImageFormat::Gif) => {
       let cursor = Cursor::new(image_data.as_ref());
-      let decoder = GifDecoder::new(cursor).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+      let decoder =
+        GifDecoder::new(cursor).map_err(|error| Error::from_reason(error.to_string()))?;
 
       let (width, height) = decoder.dimensions();
       let frames = decoder
         .into_frames()
         .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+        .map_err(|error| Error::from_reason(error.to_string()))?;
 
       let frame_count = frames.len() as u32;
 
@@ -90,7 +91,7 @@ pub fn image_info(image_data: Buffer) -> napi::Result<ImageInfo> {
     _ => {
       let img = reader
         .decode()
-        .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+        .map_err(|e| Error::from_reason(e.to_string()))?;
       let (width, height) = img.dimensions();
 
       Ok(ImageInfo {
@@ -127,15 +128,15 @@ pub fn image_crop(
   let cursor = Cursor::new(image_data.as_ref());
   let reader = ImageReader::new(cursor)
     .with_guessed_format()
-    .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    .map_err(|error| Error::from_reason(error.to_string()))?;
 
   let img = reader
     .decode()
-    .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    .map_err(|error| Error::from_reason(error.to_string()))?;
   let (img_width, img_height) = img.dimensions();
 
   if left + width > img_width || top + height > img_height {
-    return Err(napi::Error::from_reason("裁剪区域超出图像范围".to_string()));
+    return Err(Error::from_reason("裁剪区域超出图像范围".to_string()));
   }
 
   let cropped_img = img.view(left, top, width, height).to_image();
@@ -153,7 +154,42 @@ pub fn image_crop(
       height,
       image::ExtendedColorType::Rgb8,
     )
-    .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    .map_err(|e| Error::from_reason(e.to_string()))?;
+
+  Ok(Buffer::from(output_buffer))
+}
+
+/// 调整图像尺寸并返回缩放后的 Buffer
+///
+/// # 参数
+/// - `buffer`: 输入的图像 Buffer
+/// - [width](file://d:\project\Rust\image-tool\dist\index.d.ts#L8-L8): 目标宽度
+/// - [height](file://d:\project\Rust\image-tool\dist\index.d.ts#L10-L10): 目标高度
+///
+/// # 返回值
+/// - 成功时返回缩放后的图像 Buffer（JPEG 格式）
+///
+#[napi(js_name = "image_resize")]
+pub fn image_resize(buffer: Buffer, width: u32, height: u32) -> napi::Result<Buffer> {
+  let cursor = Cursor::new(buffer.as_ref());
+  let decoder = ImageReader::new(cursor)
+    .with_guessed_format()
+    .map_err(|e| Error::from_reason(e.to_string()))?;
+
+  let image = decoder
+    .decode()
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  // 缩放图像
+  let resized_image = image.resize_exact(width, height, FilterType::Triangle);
+
+  // 将图像编码为 JPEG
+  let mut output_buffer = Vec::new();
+  let mut encoder = JpegEncoder::new_with_quality(&mut output_buffer, 100);
+
+  encoder
+    .encode_image(&resized_image)
+    .map_err(|e| Error::from_reason(e.to_string()))?;
 
   Ok(Buffer::from(output_buffer))
 }
