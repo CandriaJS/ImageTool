@@ -1,5 +1,25 @@
 # 变更日志
 
+## [0.3.0](https://github.com/CandriaJS/image-tool/compare/v0.2.0...v0.3.0) (2025-06-07)
+
+
+### ✨ 新功能
+
+* **gif:** 添加 gif_merge 函数实现 GIF 图像合成 ([67dbe57](https://github.com/CandriaJS/image-tool/commit/67dbe570be24135ea7961acb3311ed643b28dd0b))
+* **gif:** 添加gif倒放功能 ([5ce0045](https://github.com/CandriaJS/image-tool/commit/5ce00451e8deff70f2042bf839f43163e3f27f7e))
+* **gif:** 添加修GIF 变速的功能 ([654035e](https://github.com/CandriaJS/image-tool/commit/654035ec64fe2960da56b04b8d6867a0c81eaba5))
+* **image:** 添加 gif_split 函数实现 GIF 图像分解 ([de719c5](https://github.com/CandriaJS/image-tool/commit/de719c5029d0d974d68d0a9b8ba1cd26ad20a271))
+
+
+### 📝 文档更新
+
+* **gif:** 更新 README.md，添加 GIF 操作相关功能说明 ([9da703c](https://github.com/CandriaJS/image-tool/commit/9da703c717fdcea1dbadf263c3333c613fa9817e))
+
+
+### 🎡 持续集成
+
+* 同步子包版本 ([4b2d945](https://github.com/CandriaJS/image-tool/commit/4b2d945fa115c80d398a81fbe29ebec544575dc5))
+
 ## [0.2.0](https://github.com/CandriaJS/image-tool/compare/v0.1.11...v0.2.0) (2025-06-07)
 
 
