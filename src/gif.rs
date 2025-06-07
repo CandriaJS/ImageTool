@@ -154,3 +154,66 @@ pub fn gif_reverse(image_data: Buffer) -> napi::Result<Buffer> {
 
   Ok(Buffer::from(output_buffer))
 }
+
+/// 修改 GIF 播放速度
+///
+/// # 参数
+/// - `image_data`: 输入的 GIF 图像 Buffer
+/// - `duration`: 每帧的间隔时间（秒），如果为 0 则保持原速
+///
+/// # 返回值
+/// - 图像Buffer
+///
+#[napi(js_name = "gif_change_duration")]
+pub fn gif_change_duration(image_data: Buffer, duration: f64) -> napi::Result<Buffer> {
+  let cursor = Cursor::new(image_data.as_ref());
+  let mut decoder = Decoder::new(cursor).map_err(|error| Error::from_reason(error.to_string()))?;
+  let global_palette = decoder.global_palette().map(|p| p.to_vec());
+
+  let (width, height) = (decoder.width() as u16, decoder.height() as u16);
+  let mut frames = Vec::new();
+
+  while let Some(frame) = decoder
+    .read_next_frame()
+    .map_err(|error| Error::from_reason(error.to_string()))?
+  {
+    frames.push(frame.to_owned());
+  }
+
+  if frames.len() <= 1 {
+    return Err(Error::from_reason(
+      "当前不是动图或者动图帧数必须小于1".to_string(),
+    ));
+  }
+
+  let mut output_buffer = Vec::new();
+  {
+    let mut encoder = Encoder::new(
+      &mut output_buffer,
+      width,
+      height,
+      global_palette.as_deref().unwrap_or(&[]),
+    )
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+    encoder
+      .set_repeat(Repeat::Infinite)
+      .map_err(|error| Error::from_reason(error.to_string()))?;
+    for frame in frames.iter() {
+      let mut new_frame = frame.clone();
+      if let Some(palette) = frame.palette.as_ref() {
+        new_frame.palette = Some(palette.clone());
+      }
+
+      if duration > 0.0 {
+        new_frame.delay = (duration * 100.0).round() as u16;
+      }
+
+      encoder
+        .write_frame(&new_frame)
+        .map_err(|error| Error::from_reason(error.to_string()))?;
+    }
+  }
+
+  Ok(Buffer::from(output_buffer))
+}
