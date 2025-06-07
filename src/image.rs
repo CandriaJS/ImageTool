@@ -370,3 +370,47 @@ pub fn image_grayscale(image_data: Buffer) -> napi::Result<Buffer> {
 
   Ok(Buffer::from(output_buffer))
 }
+
+/// 图片反色处理
+///
+/// # 参数
+/// - `image_data`: 输入的图像 Buffer
+///
+/// # 返回值
+/// - 反色处理后的图像 Buffer
+///
+#[napi(js_name = "image_invert")]
+pub fn image_invert(image_data: Buffer) -> napi::Result<Buffer> {
+  let cursor = Cursor::new(image_data.as_ref());
+  let decoder = ImageReader::new(cursor)
+    .with_guessed_format()
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  let mut image = decoder
+    .decode()
+    .map_err(|error| Error::from_reason(error.to_string()))?
+    .into_rgba8();
+
+  // 反色像素
+  for pixel in image.pixels_mut() {
+    let [r, g, b, a] = pixel.0;
+    pixel.0 = [255 - r, 255 - g, 255 - b, a];
+  }
+
+  let rgb_image = DynamicImage::ImageRgba8(image).into_rgb8();
+
+  // 将图像编码为 JPEG
+  let mut output_buffer = Vec::new();
+  let mut encoder = JpegEncoder::new_with_quality(&mut output_buffer, 100);
+
+  encoder
+    .encode(
+      rgb_image.as_raw(),
+      rgb_image.width(),
+      rgb_image.height(),
+      image::ExtendedColorType::Rgb8,
+    )
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  Ok(Buffer::from(output_buffer))
+}
