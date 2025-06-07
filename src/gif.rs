@@ -126,7 +126,6 @@ pub fn gif_reverse(image_data: Buffer) -> napi::Result<Buffer> {
     ));
   }
 
-  // 创建输出缓冲区
   let mut output_buffer = Vec::new();
   {
     let mut encoder = Encoder::new(
@@ -155,7 +154,7 @@ pub fn gif_reverse(image_data: Buffer) -> napi::Result<Buffer> {
   Ok(Buffer::from(output_buffer))
 }
 
-/// 修改 GIF 播放速度
+/// gif变速
 ///
 /// # 参数
 /// - `image_data`: 输入的 GIF 图像 Buffer
