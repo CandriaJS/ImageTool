@@ -12,7 +12,7 @@ use std::io::Cursor;
 /// - 图像Buffer数组
 ///
 #[napi(js_name = "gif_split")]
-pub fn gif_split(image_data: Buffer) -> Result<Vec<Buffer>, Error> {
+pub fn gif_split(image_data: Buffer) -> napi::Result<Vec<Buffer>> {
   let mut decoder = Decoder::new(Cursor::new(&image_data))
     .map_err(|error| Error::from_reason(format!("GIF 解码器创建失败: {error}")))?;
 
@@ -64,7 +64,7 @@ pub fn gif_split(image_data: Buffer) -> Result<Vec<Buffer>, Error> {
 ///
 
 #[napi(js_name = "gif_merge")]
-pub fn gif_merge(images: Vec<Buffer>, duration: Option<f64>) -> Result<Buffer, Error> {
+pub fn gif_merge(images: Vec<Buffer>, duration: Option<f64>) -> napi::Result<Buffer> {
   if images.is_empty() {
     return Err(Error::from_reason("输入图片数组不能为空"));
   }
@@ -94,4 +94,63 @@ pub fn gif_merge(images: Vec<Buffer>, duration: Option<f64>) -> Result<Buffer, E
 
   drop(encoder);
   Ok(Buffer::from(output))
+}
+
+/// gif倒放
+///
+/// # 参数
+/// * `image_data` - 包含图像数据的Buffer
+///
+/// # 返回值
+/// - 图像Buffer数组
+///
+#[napi(js_name = "gif_reverse")]
+pub fn gif_reverse(image_data: Buffer) -> napi::Result<Buffer> {
+  let cursor = Cursor::new(image_data.as_ref());
+  let mut decoder = Decoder::new(cursor).map_err(|error| Error::from_reason(error.to_string()))?;
+  let global_palette = decoder.global_palette().map(|p| p.to_vec());
+
+  let (width, height) = (decoder.width() as u16, decoder.height() as u16);
+  let mut frames = Vec::new();
+
+  while let Some(frame) = decoder
+    .read_next_frame()
+    .map_err(|error| Error::from_reason(error.to_string()))?
+  {
+    frames.push(frame.to_owned());
+  }
+
+  if frames.len() <= 1 {
+    return Err(Error::from_reason(
+      "当前不是动图或者动图帧数必须小于1".to_string(),
+    ));
+  }
+
+  // 创建输出缓冲区
+  let mut output_buffer = Vec::new();
+  {
+    let mut encoder = Encoder::new(
+      &mut output_buffer,
+      width,
+      height,
+      global_palette.as_deref().unwrap_or(&[]),
+    )
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+    encoder
+      .set_repeat(Repeat::Infinite)
+      .map_err(|error| Error::from_reason(error.to_string()))?;
+
+    for frame in frames.iter().rev() {
+      let mut new_frame = frame.clone();
+      if let Some(palette) = frame.palette.as_ref() {
+        new_frame.palette = Some(palette.clone());
+      }
+      encoder
+        .write_frame(&new_frame)
+        .map_err(|error| Error::from_reason(error.to_string()))?;
+    }
+  }
+
+  Ok(Buffer::from(output_buffer))
 }

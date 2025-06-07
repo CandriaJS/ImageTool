@@ -18,4 +18,5 @@ pub use image::image_rotate;
 
 mod gif;
 pub use gif::gif_merge;
+pub use gif::gif_reverse;
 pub use gif::gif_split;
