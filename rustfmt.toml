@@ -1,2 +1,11 @@
+# 缩进使用的空格数
 tab_spaces = 2
-edition = "2021"
+
+# 使用的 Rust 版本
+edition = "2024"
+
+# 控制函数参数的换行行为
+fn_params_layout = "Tall"
+
+# 格式化注释
+format_strings = true

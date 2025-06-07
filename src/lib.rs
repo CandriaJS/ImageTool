@@ -3,7 +3,6 @@
 #[macro_use]
 extern crate napi_derive;
 
-#[napi]
-fn main() {
-  println!("Hello, world!");
-}
+mod image;
+pub use image::crop_image;
+pub use image::image_info;

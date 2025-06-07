@@ -1,0 +1,144 @@
+use image::{
+  AnimationDecoder, GenericImageView, ImageDecoder, ImageFormat, ImageReader, codecs::gif,
+};
+use napi::bindgen_prelude::Buffer;
+use std::io::Cursor;
+
+#[napi(object)]
+/// 图像的基本信息
+pub struct ImageInfo {
+  /// 图像宽度
+  #[napi(js_name = "width")]
+  pub width: u32,
+
+  /// 图像高度
+  #[napi(js_name = "height")]
+  pub height: u32,
+
+  /// 是否为动图
+  #[napi(js_name = "is_multi_frame")]
+  pub is_multi_frame: bool,
+
+  /// 动图总帧数
+  #[napi(js_name = "frame_count")]
+  pub frame_count: Option<u32>,
+
+  /// 动图平均帧间隔时间
+  #[napi(js_name = "average_duration")]
+  pub average_duration: Option<f64>,
+}
+
+/// 获取图片信息
+///
+/// # 参数
+/// * `image_data` - 包含图像数据的Buffer
+///
+/// # 返回值
+/// 返回包含以下字段的 `ImageInfo`：
+/// * `width` - 图像宽度
+/// * `height` - 图像高度
+/// * `is_multi_frame` - 是否为动图
+/// * `frame_count` - 帧数（静态图为1）
+/// * `average_duration` - 平均帧延迟（毫秒）
+///
+#[napi(js_name = "image_info")]
+pub fn image_info(image_data: Buffer) -> napi::Result<ImageInfo> {
+  let cursor = Cursor::new(image_data.as_ref());
+  let reader = ImageReader::new(cursor)
+    .with_guessed_format()
+    .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+  match reader.format() {
+    // 当图片格式为GIF时
+    Some(ImageFormat::Gif) => {
+      let cursor = Cursor::new(image_data.as_ref());
+      let decoder =
+        gif::GifDecoder::new(cursor).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+      let (width, height) = decoder.dimensions();
+      let frames = decoder
+        .into_frames()
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+      let frame_count = frames.len() as u32;
+
+      // 计算动图的平均帧率
+      let total_delay: f64 = frames
+        .iter()
+        .map(|frame| {
+          let delay = frame.delay().numer_denom_ms();
+          (delay.0 as f64 / delay.1 as f64) / 1000.0
+        })
+        .sum();
+
+      let average_duration = if frame_count > 1 {
+        total_delay / (frame_count as f64)
+      } else {
+        0.0
+      };
+
+      Ok(ImageInfo {
+        width,
+        height,
+        is_multi_frame: frame_count > 1,
+        frame_count: Some(frame_count),
+        average_duration: Some(average_duration),
+      })
+    }
+    // 当图片格式为非Gif时
+    _ => {
+      let img = reader
+        .decode()
+        .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+      let (width, height) = img.dimensions();
+
+      Ok(ImageInfo {
+        width,
+        height,
+        is_multi_frame: false,
+        frame_count: None,
+        average_duration: None,
+      })
+    }
+  }
+}
+
+/// 裁剪图像并返回裁剪后的 Buffer
+///
+/// # 参数
+/// - `image_data`: 输入的图像 Buffer
+/// - `width`: 裁剪区域的宽度
+/// - `height`: 裁剪区域的高度
+///
+/// # 返回值
+/// - 成功时返回裁剪后的图像Buffer
+///
+#[napi(js_name = "crop_image")]
+pub fn crop_image(
+  image_data: Buffer,
+  left: u32,
+  top: u32,
+  width: u32,
+  height: u32,
+) -> napi::Result<Buffer> {
+  let cursor = Cursor::new(image_data.as_ref());
+  let img = ImageReader::with_format(cursor, ImageFormat::Jpeg)
+    .decode()
+    .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+  let (img_width, img_height) = img.dimensions();
+
+  if left + width > img_width || top + height > img_height {
+    return Err(napi::Error::from_reason("裁剪区域超出图像范围".to_string()));
+  }
+
+  let cropped_img = img.view(left, top, width, height).to_image();
+
+  let mut output_buffer = Vec::new();
+  cropped_img
+    .write_to(&mut Cursor::new(&mut output_buffer), ImageFormat::Jpeg)
+    .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+  Ok(Buffer::from(output_buffer))
+}
