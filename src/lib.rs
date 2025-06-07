@@ -4,5 +4,5 @@
 extern crate napi_derive;
 
 mod image;
-pub use image::crop_image;
+pub use image::image_crop;
 pub use image::image_info;

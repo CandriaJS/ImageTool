@@ -1,5 +1,6 @@
 use image::{
-  AnimationDecoder, GenericImageView, ImageDecoder, ImageFormat, ImageReader, codecs::gif,
+  AnimationDecoder, DynamicImage, GenericImageView, ImageDecoder, ImageFormat, ImageReader,
+  codecs::gif::GifDecoder, codecs::jpeg::JpegEncoder,
 };
 use napi::bindgen_prelude::Buffer;
 use std::io::Cursor;
@@ -52,8 +53,7 @@ pub fn image_info(image_data: Buffer) -> napi::Result<ImageInfo> {
     // 当图片格式为GIF时
     Some(ImageFormat::Gif) => {
       let cursor = Cursor::new(image_data.as_ref());
-      let decoder =
-        gif::GifDecoder::new(cursor).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+      let decoder = GifDecoder::new(cursor).map_err(|e| napi::Error::from_reason(e.to_string()))?;
 
       let (width, height) = decoder.dimensions();
       let frames = decoder
@@ -108,14 +108,16 @@ pub fn image_info(image_data: Buffer) -> napi::Result<ImageInfo> {
 ///
 /// # 参数
 /// - `image_data`: 输入的图像 Buffer
-/// - `width`: 裁剪区域的宽度
-/// - `height`: 裁剪区域的高度
+/// - `left`: 裁剪的左上角 X 坐标
+/// - `top`: 裁剪的左上角 Y 坐标
+/// - `width`: 裁剪的宽度
+/// - `height`: 裁剪的高度
 ///
 /// # 返回值
 /// - 成功时返回裁剪后的图像Buffer
 ///
-#[napi(js_name = "crop_image")]
-pub fn crop_image(
+#[napi(js_name = "image_crop")]
+pub fn image_crop(
   image_data: Buffer,
   left: u32,
   top: u32,
@@ -123,10 +125,13 @@ pub fn crop_image(
   height: u32,
 ) -> napi::Result<Buffer> {
   let cursor = Cursor::new(image_data.as_ref());
-  let img = ImageReader::with_format(cursor, ImageFormat::Jpeg)
-    .decode()
+  let reader = ImageReader::new(cursor)
+    .with_guessed_format()
     .map_err(|e| napi::Error::from_reason(e.to_string()))?;
 
+  let img = reader
+    .decode()
+    .map_err(|e| napi::Error::from_reason(e.to_string()))?;
   let (img_width, img_height) = img.dimensions();
 
   if left + width > img_width || top + height > img_height {
@@ -135,9 +140,19 @@ pub fn crop_image(
 
   let cropped_img = img.view(left, top, width, height).to_image();
 
+  // 转换为RGB8格式
+  let rgb_img = DynamicImage::ImageRgba8(cropped_img).into_rgb8();
+
   let mut output_buffer = Vec::new();
-  cropped_img
-    .write_to(&mut Cursor::new(&mut output_buffer), ImageFormat::Jpeg)
+  let mut encoder = JpegEncoder::new_with_quality(&mut output_buffer, 100);
+
+  encoder
+    .encode(
+      rgb_img.as_raw(),
+      width,
+      height,
+      image::ExtendedColorType::Rgb8,
+    )
     .map_err(|e| napi::Error::from_reason(e.to_string()))?;
 
   Ok(Buffer::from(output_buffer))
