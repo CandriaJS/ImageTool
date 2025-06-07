@@ -113,10 +113,10 @@ pub fn image_info(image_data: Buffer) -> napi::Result<ImageInfo> {
 ///
 /// # 参数
 /// - `image_data`: 输入的图像 Buffer
-/// - `left`: 裁剪的左上角 X 坐标
-/// - `top`: 裁剪的左上角 Y 坐标
-/// - `width`: 裁剪的宽度
-/// - `height`: 裁剪的高度
+/// - `left`: 裁剪的左上角 X 坐标, 默认为 0
+/// - `top`: 裁剪的左上角 Y 坐标, 默认为 0
+/// - `width`: 裁剪的宽度, 默认为100
+/// - `height`: 裁剪的高度, 默认为100
 ///
 /// # 返回值
 /// - 图像Buffer
@@ -124,11 +124,15 @@ pub fn image_info(image_data: Buffer) -> napi::Result<ImageInfo> {
 #[napi(js_name = "image_crop")]
 pub fn image_crop(
   image_data: Buffer,
-  left: u32,
-  top: u32,
-  width: u32,
-  height: u32,
+  left: Option<u32>,
+  top: Option<u32>,
+  width: Option<u32>,
+  height: Option<u32>,
 ) -> napi::Result<Buffer> {
+  let left = left.unwrap_or(0);
+  let top = top.unwrap_or(0);
+  let width = width.unwrap_or(100);
+  let height = height.unwrap_or(100);
   let cursor = Cursor::new(image_data.as_ref());
   let reader = ImageReader::new(cursor)
     .with_guessed_format()
@@ -411,6 +415,144 @@ pub fn image_invert(image_data: Buffer) -> napi::Result<Buffer> {
   let encoder = PngEncoder::new(&mut output_buffer);
   let (width, height) = rgba_image.dimensions();
   let raw_pixels = rgba_image.into_rgba8().into_raw();
+
+  encoder
+    .write_image(&raw_pixels, width, height, image::ColorType::Rgba8.into())
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  Ok(Buffer::from(output_buffer))
+}
+
+/// 水平拼接图片（自动统一高度后拼接）
+///
+/// # 参数
+/// - `images`: 输入的图像 Buffer 数组
+///
+/// # 返回值
+/// - 图像Buffer
+///
+#[napi(js_name = "image_merge_horizontal")]
+pub fn image_merge_horizontal(images: Vec<Buffer>) -> napi::Result<Buffer> {
+  if images.is_empty() {
+    return Err(Error::from_reason("输入图像数组不能为空".to_string()));
+  }
+
+  let mut decoded_images = Vec::new();
+
+  for image_data in &images {
+    let cursor = Cursor::new(image_data.as_ref());
+    let decoder = ImageReader::new(cursor)
+      .with_guessed_format()
+      .map_err(|error| Error::from_reason(error.to_string()))?;
+
+    let image = decoder
+      .decode()
+      .map_err(|error| Error::from_reason(error.to_string()))?;
+    decoded_images.push(image);
+  }
+
+  // 获取最小高度
+  let min_height = decoded_images
+    .iter()
+    .map(|img| img.height())
+    .min()
+    .unwrap_or(0);
+
+  let total_width: u32 = decoded_images
+    .iter()
+    .map(|img| {
+      let scale = min_height as f32 / img.height() as f32;
+      (img.width() as f32 * scale) as u32
+    })
+    .sum();
+
+  let mut merged_image = ImageRgba8(RgbaImage::new(total_width, min_height));
+  let mut current_x = 0;
+
+  for image in &decoded_images {
+    // 缩放图像为统一高度
+    let scale = min_height as f32 / image.height() as f32;
+    let scaled_width = (image.width() as f32 * scale) as u32;
+    let resized_image = image.resize_exact(scaled_width, min_height, FilterType::Triangle);
+    for y in 0..min_height {
+      for x in 0..scaled_width {
+        let pixel = resized_image.get_pixel(x, y);
+        merged_image.put_pixel(current_x + x, y, pixel);
+      }
+    }
+    current_x += scaled_width;
+  }
+
+  let mut output_buffer = Vec::new();
+  let encoder = PngEncoder::new(&mut output_buffer);
+
+  let (width, height) = merged_image.dimensions();
+  let raw_pixels = merged_image.into_rgba8().into_raw();
+
+  encoder
+    .write_image(&raw_pixels, width, height, image::ColorType::Rgba8.into())
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  Ok(Buffer::from(output_buffer))
+}
+
+/// 垂直拼接图片（自动统一宽度后拼接）
+///
+/// # 参数
+/// - `images`: 输入的图像 Buffer 数组
+///
+/// # 返回值
+/// - 图像Buffer
+///
+#[napi(js_name = "image_merge_vertical")]
+pub fn image_merge_vertical(images: Vec<Buffer>) -> napi::Result<Buffer> {
+  if images.is_empty() {
+    return Err(Error::from_reason("输入图像数组不能为空".to_string()));
+  }
+
+  let mut decoded_images = Vec::new();
+
+  for image_data in &images {
+    let cursor = Cursor::new(image_data.as_ref());
+    let decoder = ImageReader::new(cursor)
+      .with_guessed_format()
+      .map_err(|error| Error::from_reason(error.to_string()))?;
+
+    let image = decoder
+      .decode()
+      .map_err(|error| Error::from_reason(error.to_string()))?;
+    decoded_images.push(image);
+  }
+
+  // 获取最大宽度
+  let max_width = decoded_images
+    .iter()
+    .map(|img| img.width())
+    .max()
+    .unwrap_or(0);
+  let total_height = decoded_images.iter().map(|img| img.height()).sum();
+
+  let mut merged_image = ImageRgba8(RgbaImage::new(max_width, total_height));
+  let mut current_y = 0;
+
+  for image in &decoded_images {
+    // 缩放图像为统一宽度
+    let resized_image = image.resize_exact(max_width, image.height(), FilterType::Triangle);
+
+    for y in 0..resized_image.height() {
+      for x in 0..resized_image.width() {
+        let pixel = resized_image.get_pixel(x, y);
+        merged_image.put_pixel(x, current_y + y, pixel);
+      }
+    }
+    current_y += resized_image.height();
+  }
+
+  let mut output_buffer = Vec::new();
+  let encoder = PngEncoder::new(&mut output_buffer);
+
+  let (width, height) = merged_image.dimensions();
+  let raw_pixels = merged_image.into_rgba8().into_raw();
 
   encoder
     .write_image(&raw_pixels, width, height, image::ColorType::Rgba8.into())
