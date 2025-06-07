@@ -1,8 +1,9 @@
 use image::{
-  AnimationDecoder, DynamicImage,
-  DynamicImage::ImageRgba8,
-  GenericImage, GenericImageView, ImageDecoder, ImageFormat, ImageReader, Rgba, RgbaImage,
-  codecs::{gif::GifDecoder, jpeg::JpegEncoder},
+  AnimationDecoder,
+  DynamicImage::{self, ImageRgba8},
+  GenericImage, GenericImageView, ImageDecoder, ImageEncoder, ImageFormat, ImageReader, Rgba,
+  RgbaImage,
+  codecs::{gif::GifDecoder, png::PngEncoder},
   imageops::FilterType,
 };
 use napi::{Error, bindgen_prelude::Buffer};
@@ -144,20 +145,14 @@ pub fn image_crop(
 
   let cropped_img = img.view(left, top, width, height).to_image();
 
-  // 转换为RGB8格式
-  let rgb_img = DynamicImage::ImageRgba8(cropped_img).into_rgb8();
-
   let mut output_buffer = Vec::new();
-  let mut encoder = JpegEncoder::new_with_quality(&mut output_buffer, 100);
+  let encoder = PngEncoder::new(&mut output_buffer);
+  let (width, height) = cropped_img.dimensions();
+  let raw_pixels = cropped_img.into_raw();
 
   encoder
-    .encode(
-      rgb_img.as_raw(),
-      width,
-      height,
-      image::ExtendedColorType::Rgb8,
-    )
-    .map_err(|e| Error::from_reason(e.to_string()))?;
+    .write_image(&raw_pixels, width, height, image::ColorType::Rgba8.into())
+    .map_err(|error| Error::from_reason(error.to_string()))?;
 
   Ok(Buffer::from(output_buffer))
 }
@@ -165,15 +160,21 @@ pub fn image_crop(
 /// 调整图片大小
 ///
 /// # 参数
-/// - `image_data`: 输入的图像 Buffer
+/// - `buffer`: 输入的图像 Buffer
 /// - `width`: 目标宽度
 /// - `height`: 目标高度
 ///
 /// # 返回值
-/// - 图像 Buffer
+/// - 图像Buffer
 ///
 #[napi(js_name = "image_resize")]
-pub fn image_resize(buffer: Buffer, width: u32, height: u32) -> napi::Result<Buffer> {
+pub fn image_resize(
+  buffer: Buffer,
+  width: Option<u32>,
+  height: Option<u32>,
+) -> napi::Result<Buffer> {
+  let width = width.unwrap();
+  let height = height.unwrap();
   let cursor = Cursor::new(buffer.as_ref());
   let decoder = ImageReader::new(cursor)
     .with_guessed_format()
@@ -185,13 +186,13 @@ pub fn image_resize(buffer: Buffer, width: u32, height: u32) -> napi::Result<Buf
 
   // 缩放图像
   let resized_image = image.resize_exact(width, height, FilterType::Triangle);
-
-  // 将图像编码为 JPEG
   let mut output_buffer = Vec::new();
-  let mut encoder = JpegEncoder::new_with_quality(&mut output_buffer, 100);
+  let encoder = PngEncoder::new(&mut output_buffer);
+  let (width, height) = resized_image.dimensions();
+  let raw_pixels = resized_image.into_rgba8().into_raw();
 
   encoder
-    .encode_image(&resized_image)
+    .write_image(&raw_pixels, width, height, image::ColorType::Rgba8.into())
     .map_err(|error| Error::from_reason(error.to_string()))?;
 
   Ok(Buffer::from(output_buffer))
@@ -204,7 +205,7 @@ pub fn image_resize(buffer: Buffer, width: u32, height: u32) -> napi::Result<Buf
 /// - `degrees`: 旋转的角度, 可选参数, 默认为 90.0
 ///
 /// # 返回值
-/// - 图像 Buffer
+/// - 图像Buffer
 ///
 #[napi(js_name = "image_rotate")]
 pub fn image_rotate(image_data: Buffer, degrees: Option<f64>) -> napi::Result<Buffer> {
@@ -221,7 +222,7 @@ pub fn image_rotate(image_data: Buffer, degrees: Option<f64>) -> napi::Result<Bu
   let (width, height) = image.dimensions();
 
   // 计算旋转后需要的画布大小
-  let radians = (degrees as f32) * PI as f32 / 180.0; // 取负角度进行旋转， 这里是因为Rust的Image库默认是逆时针旋转
+  let radians = (degrees as f32) * PI as f32 / 180.0;
   let sin_rad = radians.sin().abs();
   let cos_rad = radians.cos().abs();
 
@@ -253,7 +254,7 @@ pub fn image_rotate(image_data: Buffer, degrees: Option<f64>) -> napi::Result<Bu
       let old_x = (dx * cos_rad + dy * sin_rad + half_width) as i32;
       let old_y = (-dx * sin_rad + dy * cos_rad + half_height) as i32;
 
-      //  检查坐标是否在图像范围内
+      // 检查坐标是否在图像范围内
       if (old_x | old_y) >= 0 && old_x < width_i32 && old_y < height_i32 {
         let pixel = image.get_pixel(old_x as u32, old_y as u32);
         rotated.put_pixel(x, y, pixel);
@@ -261,12 +262,14 @@ pub fn image_rotate(image_data: Buffer, degrees: Option<f64>) -> napi::Result<Bu
     }
   }
 
-  // 将图像编码为 JPEG
   let mut output_buffer = Vec::new();
-  let mut encoder = JpegEncoder::new_with_quality(&mut output_buffer, 100);
+  let encoder = PngEncoder::new(&mut output_buffer);
+
+  let (width, height) = rotated.dimensions();
+  let raw_pixels = rotated.into_rgba8().into_raw();
 
   encoder
-    .encode_image(&rotated)
+    .write_image(&raw_pixels, width, height, image::ColorType::Rgba8.into())
     .map_err(|error| Error::from_reason(error.to_string()))?;
 
   Ok(Buffer::from(output_buffer))
@@ -278,7 +281,7 @@ pub fn image_rotate(image_data: Buffer, degrees: Option<f64>) -> napi::Result<Bu
 /// - `image_data`: 输入的图像 Buffer
 ///
 /// # 返回值
-/// - 图像 Buffer
+/// - 图像Buffer
 ///
 #[napi(js_name = "image_flip_horizontal")]
 pub fn image_flip_horizontal(image_data: Buffer) -> napi::Result<Buffer> {
@@ -294,12 +297,14 @@ pub fn image_flip_horizontal(image_data: Buffer) -> napi::Result<Buffer> {
   // 水平翻转图像
   let flipped_image = image.fliph();
 
-  // 将图像编码为 JPEG
   let mut output_buffer = Vec::new();
-  let mut encoder = JpegEncoder::new_with_quality(&mut output_buffer, 100);
+  let encoder = PngEncoder::new(&mut output_buffer);
+
+  let (width, height) = flipped_image.dimensions();
+  let raw_pixels = flipped_image.into_rgba8().into_raw();
 
   encoder
-    .encode_image(&flipped_image)
+    .write_image(&raw_pixels, width, height, image::ColorType::Rgba8.into())
     .map_err(|error| Error::from_reason(error.to_string()))?;
 
   Ok(Buffer::from(output_buffer))
@@ -311,7 +316,7 @@ pub fn image_flip_horizontal(image_data: Buffer) -> napi::Result<Buffer> {
 /// - `image_data`: 输入的图像 Buffer
 ///
 /// # 返回值
-/// - 图像 Buffer
+/// - 图像Buffer
 ///
 #[napi(js_name = "image_flip_vertical")]
 pub fn image_flip_vertical(image_data: Buffer) -> napi::Result<Buffer> {
@@ -324,15 +329,17 @@ pub fn image_flip_vertical(image_data: Buffer) -> napi::Result<Buffer> {
     .decode()
     .map_err(|error| Error::from_reason(error.to_string()))?;
 
-  // 水平翻转图像
+  // 垂直翻转图像
   let flipped_image = image.flipv();
 
-  // 将图像编码为 JPEG
   let mut output_buffer = Vec::new();
-  let mut encoder = JpegEncoder::new_with_quality(&mut output_buffer, 100);
+  let encoder = PngEncoder::new(&mut output_buffer);
+
+  let (width, height) = flipped_image.dimensions();
+  let raw_pixels = flipped_image.into_rgba8().into_raw();
 
   encoder
-    .encode_image(&flipped_image)
+    .write_image(&raw_pixels, width, height, image::ColorType::Rgba8.into())
     .map_err(|error| Error::from_reason(error.to_string()))?;
 
   Ok(Buffer::from(output_buffer))
@@ -344,7 +351,7 @@ pub fn image_flip_vertical(image_data: Buffer) -> napi::Result<Buffer> {
 /// - `image_data`: 输入的图像 Buffer
 ///
 /// # 返回值
-/// - 图像 Buffer
+/// - 图像Buffer
 ///
 #[napi(js_name = "image_grayscale")]
 pub fn image_grayscale(image_data: Buffer) -> napi::Result<Buffer> {
@@ -353,31 +360,33 @@ pub fn image_grayscale(image_data: Buffer) -> napi::Result<Buffer> {
     .with_guessed_format()
     .map_err(|error| Error::from_reason(error.to_string()))?;
 
+  // 灰度化
   let image = decoder
     .decode()
-    .map_err(|error| Error::from_reason(error.to_string()))?;
+    .map_err(|error| Error::from_reason(error.to_string()))?
+    .grayscale()
+    .into_rgba8();
 
-  // 转换为灰度图
-  let grayscale_image = image.grayscale();
+  let (width, height) = image.dimensions();
+  let raw_pixels = image.into_raw();
 
-  // 将图像编码为 JPEG
   let mut output_buffer = Vec::new();
-  let mut encoder = JpegEncoder::new_with_quality(&mut output_buffer, 100);
+  let encoder = PngEncoder::new(&mut output_buffer);
 
   encoder
-    .encode_image(&grayscale_image)
+    .write_image(&raw_pixels, width, height, image::ColorType::Rgba8.into())
     .map_err(|error| Error::from_reason(error.to_string()))?;
 
   Ok(Buffer::from(output_buffer))
 }
 
-/// 图片反色处理
+/// 反色图片
 ///
 /// # 参数
 /// - `image_data`: 输入的图像 Buffer
 ///
 /// # 返回值
-/// - 反色处理后的图像 Buffer
+/// - 图像Buffer
 ///
 #[napi(js_name = "image_invert")]
 pub fn image_invert(image_data: Buffer) -> napi::Result<Buffer> {
@@ -397,19 +406,14 @@ pub fn image_invert(image_data: Buffer) -> napi::Result<Buffer> {
     pixel.0 = [255 - r, 255 - g, 255 - b, a];
   }
 
-  let rgb_image = DynamicImage::ImageRgba8(image).into_rgb8();
-
-  // 将图像编码为 JPEG
+  let rgba_image = DynamicImage::ImageRgba8(image);
   let mut output_buffer = Vec::new();
-  let mut encoder = JpegEncoder::new_with_quality(&mut output_buffer, 100);
+  let encoder = PngEncoder::new(&mut output_buffer);
+  let (width, height) = rgba_image.dimensions();
+  let raw_pixels = rgba_image.into_rgba8().into_raw();
 
   encoder
-    .encode(
-      rgb_image.as_raw(),
-      rgb_image.width(),
-      rgb_image.height(),
-      image::ExtendedColorType::Rgb8,
-    )
+    .write_image(&raw_pixels, width, height, image::ColorType::Rgba8.into())
     .map_err(|error| Error::from_reason(error.to_string()))?;
 
   Ok(Buffer::from(output_buffer))
