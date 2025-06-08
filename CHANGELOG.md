@@ -1,5 +1,12 @@
 # 变更日志
 
+## [0.3.3](https://github.com/CandriaJS/image-tool/compare/v0.3.2...v0.3.3) (2025-06-08)
+
+
+### 🐛 错误修复
+
+* **gif:** 修复 GIF 图像解码和帧处理的问题 ([acbf22d](https://github.com/CandriaJS/image-tool/commit/acbf22d1c844f7feec59e7202f2b57c54b88d874))
+
 ## [0.3.2](https://github.com/CandriaJS/image-tool/compare/v0.3.1...v0.3.2) (2025-06-07)
 
 
