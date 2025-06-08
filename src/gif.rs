@@ -1,5 +1,5 @@
 use gif::{Decoder, Encoder, Frame, Repeat};
-use image::{DynamicImage, GenericImageView, ImageFormat};
+use image::{DynamicImage, GenericImageView, ImageFormat, RgbaImage, load_from_memory};
 use napi::{Error, bindgen_prelude::Buffer};
 use std::io::Cursor;
 
@@ -13,14 +13,13 @@ use std::io::Cursor;
 ///
 #[napi(js_name = "gif_split")]
 pub fn gif_split(image_data: Buffer) -> napi::Result<Vec<Buffer>> {
-  let mut decoder = Decoder::new(Cursor::new(&image_data))
-    .map_err(|error| Error::from_reason(format!("GIF 解码器创建失败: {error}")))?;
+  let mut decoder = Decoder::new(Cursor::new(image_data.as_ref()))
+    .map_err(|error| Error::from_reason(format!("GIF解码失败: {error}")))?;
 
-  // 收集所有帧
   let mut frames = Vec::new();
   while let Some(frame) = decoder
     .read_next_frame()
-    .map_err(|error| Error::from_reason(format!("GIF 帧读取失败: {error}")))?
+    .map_err(|error| Error::from_reason(format!("GIF帧读取失败: {error}")))?
   {
     frames.push(frame.to_owned());
   }
@@ -34,19 +33,42 @@ pub fn gif_split(image_data: Buffer) -> napi::Result<Vec<Buffer>> {
 
   let mut buffers = Vec::with_capacity(frames.len());
 
+  let global_palette = decoder.global_palette().map(|p| p.to_vec());
+
   for frame in frames {
     let mut buffer = Vec::new();
+    let mut rgba_data = Vec::with_capacity(frame.width as usize * frame.height as usize * 4);
+    let palette = if let Some(frame_palette) = frame.palette {
+      frame_palette
+    } else if let Some(ref global_pal) = global_palette {
+      global_pal.clone()
+    } else {
+      return Err(Error::from_reason("获取图像调色板"));
+    };
 
-    let rgba = image::RgbaImage::from_raw(
-      frame.width as u32,
-      frame.height as u32,
-      frame.buffer.to_vec(),
-    )
-    .ok_or_else(|| Error::from_reason("图像转换失败"))?;
+    for &pixel_idx in frame.buffer.iter() {
+      let color_idx = pixel_idx as usize * 3;
+      if color_idx + 2 < palette.len() {
+        // 检查是否是透明像素，如果有则设置为透明，否则则为不透明
+        let alpha = if let Some(transparent_idx) = frame.transparent {
+          if pixel_idx == transparent_idx { 0 } else { 255 }
+        } else {
+          255
+        };
+
+        rgba_data.push(palette[color_idx]);
+        rgba_data.push(palette[color_idx + 1]);
+        rgba_data.push(palette[color_idx + 2]);
+        rgba_data.push(alpha);
+      }
+    }
+
+    let rgba = RgbaImage::from_raw(frame.width as u32, frame.height as u32, rgba_data)
+      .ok_or_else(|| Error::from_reason("图像创建失败"))?;
 
     DynamicImage::ImageRgba8(rgba)
       .write_to(&mut Cursor::new(&mut buffer), ImageFormat::Png)
-      .map_err(|e| Error::from_reason(format!("PNG 编码失败: {e}")))?;
+      .map_err(|error| Error::from_reason(format!("图像编码失败: {error}")))?;
 
     buffers.push(Buffer::from(buffer));
   }
@@ -68,7 +90,7 @@ pub fn gif_merge(images: Vec<Buffer>, duration: Option<f64>) -> napi::Result<Buf
   if images.is_empty() {
     return Err(Error::from_reason("输入图片数组不能为空"));
   }
-  let first_img = image::load_from_memory(&images[0])
+  let first_img = load_from_memory(&images[0])
     .map_err(|e| Error::from_reason(format!("首帧图片加载失败: {e}")))?;
   let (width, height) = first_img.dimensions();
 
@@ -81,7 +103,7 @@ pub fn gif_merge(images: Vec<Buffer>, duration: Option<f64>) -> napi::Result<Buf
   let delay = ((duration.unwrap_or(0.05) * 100.0) as u16).max(1);
 
   for img_buffer in images {
-    let img = image::load_from_memory(&img_buffer)
+    let img = load_from_memory(&img_buffer)
       .map_err(|e| Error::from_reason(format!("图片加载失败: {e}")))?;
     let resized = img.resize_exact(width, height, image::imageops::FilterType::Lanczos3);
     let rgba = resized.into_rgba8();
