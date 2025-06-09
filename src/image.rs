@@ -366,12 +366,13 @@ pub fn image_grayscale(image_data: Buffer) -> napi::Result<Buffer> {
     .with_guessed_format()
     .map_err(|error| Error::from_reason(error.to_string()))?;
 
-  // 灰度化
+  // 解码图像
   let image = decoder
     .decode()
-    .map_err(|error| Error::from_reason(error.to_string()))?
-    .grayscale()
-    .into_rgba8();
+    .map_err(|error| Error::from_reason(error.to_string()))?;
+
+  // 灰度化
+  let image = image.grayscale().into_rgba8();
 
   let (width, height) = image.dimensions();
   let raw_pixels = image.into_raw();
@@ -425,7 +426,7 @@ pub fn image_invert(image_data: Buffer) -> napi::Result<Buffer> {
   Ok(Buffer::from(output_buffer))
 }
 
-/// 水平拼接图片（自动统一高度后拼接）
+/// 水平拼接图片
 ///
 /// # 参数
 /// - `images`: 输入的图像 Buffer 数组

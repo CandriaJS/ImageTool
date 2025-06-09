@@ -1,5 +1,5 @@
 use gif::{Decoder, Encoder, Frame, Repeat};
-use image::{DynamicImage, GenericImageView, ImageFormat, RgbaImage, load_from_memory};
+use image::{DynamicImage, GenericImageView, ImageFormat, Rgba, RgbaImage, load_from_memory};
 use napi::{Error, bindgen_prelude::Buffer};
 use std::io::Cursor;
 
@@ -32,41 +32,77 @@ pub fn gif_split(image_data: Buffer) -> napi::Result<Vec<Buffer>> {
   }
 
   let mut buffers = Vec::with_capacity(frames.len());
-
   let global_palette = decoder.global_palette().map(|p| p.to_vec());
+  let (width, height) = (decoder.width() as u32, decoder.height() as u32);
+
+  let mut base_image = RgbaImage::new(width, height);
+  for pixel in base_image.pixels_mut() {
+    *pixel = Rgba([255, 255, 255, 255]);
+  }
 
   for frame in frames {
-    let mut buffer = Vec::new();
-    let mut rgba_data = Vec::with_capacity(frame.width as usize * frame.height as usize * 4);
-    let palette = if let Some(frame_palette) = frame.palette {
-      frame_palette
-    } else if let Some(ref global_pal) = global_palette {
-      global_pal.clone()
-    } else {
-      return Err(Error::from_reason("获取图像调色板"));
-    };
+    let mut current_image = base_image.clone();
+    let palette = frame
+      .palette
+      .as_ref()
+      .or_else(|| global_palette.as_ref())
+      .ok_or_else(|| Error::from_reason("无法获取调色板"))?;
 
-    for &pixel_idx in frame.buffer.iter() {
-      let color_idx = pixel_idx as usize * 3;
-      if color_idx + 2 < palette.len() {
-        // 检查是否是透明像素，如果有则设置为透明，否则则为不透明
-        let alpha = if let Some(transparent_idx) = frame.transparent {
-          if pixel_idx == transparent_idx { 0 } else { 255 }
-        } else {
-          255
-        };
+    // 计算当前帧的偏移位置
+    let frame_left = frame.left as u32;
+    let frame_top = frame.top as u32;
 
-        rgba_data.push(palette[color_idx]);
-        rgba_data.push(palette[color_idx + 1]);
-        rgba_data.push(palette[color_idx + 2]);
-        rgba_data.push(alpha);
+    // 遍历当前帧的像素
+    for (i, &pixel_idx) in frame.buffer.iter().enumerate() {
+      let x = (i as u32) % frame.width as u32;
+      let y = (i as u32) / frame.width as u32;
+      let actual_x = frame_left + x;
+      let actual_y = frame_top + y;
+      if actual_x < width && actual_y < height {
+        let color_idx = pixel_idx as usize * 3;
+        if color_idx + 2 < palette.len() {
+          let r = palette[color_idx];
+          let g = palette[color_idx + 1];
+          let b = palette[color_idx + 2];
+          let a = if let Some(transparent_idx) = frame.transparent {
+            if pixel_idx == transparent_idx { 0 } else { 255 }
+          } else {
+            255
+          };
+
+          match frame.dispose {
+            gif::DisposalMethod::Any | gif::DisposalMethod::Keep => {
+              if a == 255 {
+                current_image.put_pixel(actual_x, actual_y, Rgba([r, g, b, a]));
+              }
+            }
+            gif::DisposalMethod::Background => {
+              if a == 255 {
+                current_image.put_pixel(actual_x, actual_y, Rgba([r, g, b, a]));
+              } else {
+                current_image.put_pixel(actual_x, actual_y, Rgba([255, 255, 255, 255]));
+              }
+            }
+            gif::DisposalMethod::Previous => {
+              if a == 255 {
+                current_image.put_pixel(actual_x, actual_y, Rgba([r, g, b, a]));
+              }
+            }
+          }
+        }
       }
     }
 
-    let rgba = RgbaImage::from_raw(frame.width as u32, frame.height as u32, rgba_data)
-      .ok_or_else(|| Error::from_reason("图像创建失败"))?;
+    match frame.dispose {
+      gif::DisposalMethod::Any | gif::DisposalMethod::Keep => {
+        base_image = current_image.clone();
+      }
+      gif::DisposalMethod::Background => {}
+      gif::DisposalMethod::Previous => {}
+    }
 
-    DynamicImage::ImageRgba8(rgba)
+    let mut buffer = Vec::new();
+    DynamicImage::ImageRgba8(current_image)
       .write_to(&mut Cursor::new(&mut buffer), ImageFormat::Png)
       .map_err(|error| Error::from_reason(format!("图像编码失败: {error}")))?;
 
