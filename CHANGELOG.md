@@ -1,5 +1,12 @@
 # 变更日志
 
+## [0.3.4](https://github.com/CandriaJS/image-tool/compare/v0.3.3...v0.3.4) (2025-06-09)
+
+
+### ♻️ 代码重构
+
+* **image:** 优化图像灰度化处理 ([d1fb835](https://github.com/CandriaJS/image-tool/commit/d1fb835ea874805fedfa15359e11e604ef9bb202))
+
 ## [0.3.3](https://github.com/CandriaJS/image-tool/compare/v0.3.2...v0.3.3) (2025-06-08)
 
 
