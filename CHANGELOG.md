@@ -1,5 +1,12 @@
 # 变更日志
 
+## [0.3.5](https://github.com/CandriaJS/image-tool/compare/v0.3.4...v0.3.5) (2025-06-18)
+
+
+### 🐛 错误修复
+
+* gif变速没有默认值 ([253b53f](https://github.com/CandriaJS/image-tool/commit/253b53f67a5dedbfeb50d051c9782edebe9b6ff5))
+
 ## [0.3.4](https://github.com/CandriaJS/image-tool/compare/v0.3.3...v0.3.4) (2025-06-09)
 
 
