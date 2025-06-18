@@ -222,7 +222,8 @@ pub fn gif_reverse(image_data: Buffer) -> napi::Result<Buffer> {
 /// - 图像Buffer
 ///
 #[napi(js_name = "gif_change_duration")]
-pub fn gif_change_duration(image_data: Buffer, duration: f64) -> napi::Result<Buffer> {
+pub fn gif_change_duration(image_data: Buffer, duration: Option<f64>) -> napi::Result<Buffer> {
+  let duration = duration.unwrap_or(0.02);
   let cursor = Cursor::new(image_data.as_ref());
   let mut decoder = Decoder::new(cursor).map_err(|error| Error::from_reason(error.to_string()))?;
   let global_palette = decoder.global_palette().map(|p| p.to_vec());
